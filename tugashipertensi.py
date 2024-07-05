@@ -182,7 +182,7 @@ if selected == "Pre-Processing":
 
 if selected == "Modelling":
     st.write("Hasil Akurasi, Presisi, Recall, F1- Score Metode SVM")
-    data = pd.read_csv('https://raw.githubusercontent.com/DiahDSyntia/tugasd/main/datanormalisasi.csv')
+    data = pd.read_csv('https://raw.githubusercontent.com/DiahDSyntia/tugasd/main/datanormalisasi1425.csv')
 
     # Memisahkan fitur dan target
     X = data[['Usia', 'IMT', 'Sistole', 'Diastole', 'Nafas','Detak Nadi','JK_L','JK_P']]
@@ -330,13 +330,13 @@ if selected == "Implementation":
             'Detak Nadi': [Detak_nadi]
         }
         new_data = pd.DataFrame(data)
-        datatest = pd.read_csv('https://raw.githubusercontent.com/DiahDSyntia/tugasd/main/X_test1.csv')  
+        datatest = pd.read_csv('https://raw.githubusercontent.com/DiahDSyntia/tugasd/main/X_test1425.csv')  
         datatest = pd.concat([datatest, new_data], ignore_index=True)
         #st.write(datatest)
-        datanorm = joblib.load('scaler.pkl').fit_transform(datatest)
+        datanorm = joblib.load('scaler1425.pkl').fit_transform(datatest)
         # Prediksi dengan metode yang dipilih
         if metode == "SVM":
-            model = joblib.load('modelrbf.pkl')
+            model = joblib.load('modelrbf1425.pkl')
             model_name = "SVM"
         else:  # SVM + Bagging
             model = joblib.load('baggingovo.pkl')

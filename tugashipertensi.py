@@ -135,7 +135,7 @@ if selected == "Home":
 if selected == "Datasets":
     st.title(f"{selected}")
     st.write("Data yang digunakan yaitu data Penyakit Hipertensi dari UPT Puskesmas Modopuro Mojokerto.")
-    data_hp = pd.read_csv('https://raw.githubusercontent.com/DiahDSyntia/6sks/main/DATAA6SKS.csv',sep=';')
+    data_hp = pd.read_csv('https://raw.githubusercontent.com/DiahDSyntia/6sks/main/DATASKRIPSI.csv',sep=';')
     st.write("Dataset Hipertensi : ", data_hp) 
     st.write('Jumlah baris dan kolom :', data_hp.shape)
     X=data_hp.iloc[:,0:7].values 
@@ -155,7 +155,7 @@ if selected == "Pre-Processing":
     st.markdown('<h3 style="text-align: left;"> Data Asli </h1>', unsafe_allow_html=True)
     st.write("Berikut merupakan data asli yang didapat dari UPT Puskesmas Modopuro Mojokerto.")
     
-    df = pd.read_csv("https://raw.githubusercontent.com/DiahDSyntia/6sks/main/DATAA6SKS.csv",sep=';')
+    df = pd.read_csv("https://raw.githubusercontent.com/DiahDSyntia/6sks/main/DATASKRIPSI.csv",sep=';')
     st.write("Dataset Hipertensi : ", df) 
     st.markdown('<h3 style="text-align: left;"> Lakukan Cleaning Data </h1>', unsafe_allow_html=True)
     if st.button("Clean Data"):
@@ -182,7 +182,7 @@ if selected == "Pre-Processing":
 
 if selected == "Modelling":
     st.write("Hasil Akurasi, Presisi, Recall, F1- Score Metode SVM")
-    data = pd.read_csv('https://raw.githubusercontent.com/DiahDSyntia/6sks/main/datahasilnormalisasi.csv', sep=';')
+    data = pd.read_csv('https://raw.githubusercontent.com/DiahDSyntia/6sks/main/datanormalisasi.csv')
 
     # Memisahkan fitur dan target
     X = data[['Usia', 'IMT', 'Sistole', 'Diastole', 'Nafas','Detak Nadi','JK_L','JK_P']]
@@ -333,10 +333,10 @@ if selected == "Implementation":
         datatest = pd.read_csv('https://raw.githubusercontent.com/DiahDSyntia/6sks/main/X_test%20(2).csv')  
         datatest = pd.concat([datatest, new_data], ignore_index=True)
         #st.write(datatest)
-        datanorm = joblib.load('scaler3.pkl').fit_transform(datatest)
+        datanorm = joblib.load('scaler.pkl').fit_transform(datatest)
         # Prediksi dengan metode yang dipilih
         if metode == "SVM":
-            model = joblib.load('modelRBFovo.pkl')
+            model = joblib.load('modelrbf.pkl')
             model_name = "SVM"
         else:  # SVM + Bagging
             model = joblib.load('baggingovo.pkl')

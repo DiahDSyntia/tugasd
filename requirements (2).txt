@@ -1,0 +1,11 @@
+numpy
+pandas 
+streamlit
+plotly 
+Pillow 
+matplotlib 
+matplotlib-inline 
+seaborn 
+scikit_learn
+streamlit-option-menu
+tensorflow

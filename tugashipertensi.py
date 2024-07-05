@@ -12,6 +12,7 @@ from sklearn.svm import SVC
 from sklearn.ensemble import BaggingClassifier
 import joblib
 import requests
+from sklearn.multiclass import OneVsRestClassifier
 
 #Metrics
 from sklearn.metrics import make_scorer, accuracy_score,precision_score
@@ -72,6 +73,40 @@ def normalize_data(data):
     data = data.drop_duplicates()
     return data
 
+# Fungsi untuk memuat data
+def load_data():
+    # Contoh: load data dari file CSV
+    data = pd.read_csv('https://raw.githubusercontent.com/DiahDSyntia/6sks/main/X_testnormalisasi.csv')
+    return data
+
+# Fungsi untuk memuat model
+def load_model():
+    # Contoh: load model dari file pkl
+    model = joblib.load('modelsvmc1.pkl')
+    return model
+
+# Fungsi untuk melakukan prediksi
+def predict(model, data):
+    # Asumsi kolom fitur adalah semua kolom kecuali 'Actual'
+    features = data.drop(columns=['Actual'])
+    predictions = model.predict(features)
+    return predictions
+
+# Fungsi untuk mengelompokkan data berdasarkan hasil prediksi dan aktual
+def group_data_by_confusion_matrix(y_true, y_pred, X_test):
+    data = X_test.copy()
+    data['Actual'] = y_true
+    data['Predicted'] = y_pred
+
+    # Buat dictionary untuk menyimpan data per kelompok
+    grouped_data = {}
+    for actual_class in sorted(data['Actual'].unique()):
+        for predicted_class in sorted(data['Predicted'].unique()):
+            group_name = f'Actual {actual_class} - Predicted {predicted_class}'
+            grouped_data[group_name] = data[(data['Actual'] == actual_class) & (data['Predicted'] == predicted_class)]
+    
+    return grouped_data
+
 with st.sidebar:
     selected = option_menu(
         menu_title="Main Menu",  # required
@@ -81,9 +116,10 @@ with st.sidebar:
         default_index=0,  # optional
         )
 
-
 if selected == "Home":
     st.title(f'Web Klasifikasi Hipertensi')
+    # Menampilkan gambar dari file lokal
+    #st.image("hipertensi.jpeg", use_column_width=True)
     st.write('Hipertensi adalah kondisi yang terjadi ketika tekanan darah naik di atas kisaran normal, biasanya masyarakat menyebutnya darah tinggi. Penyakit hipertensi berkaitan dengan kenaikan tekanan darah di sistolik maupun diastolik. Faktor faktor yang berperan untuk penyakit ini adalah perubahan gaya hidup, asupan makanan dengan kadar lemak tinggi, dan kurangnya aktivitas fisik seperti olahraga')
     st.write('Faktor Faktor Resiko Hipertensi')
     st.write("""
@@ -99,7 +135,7 @@ if selected == "Home":
 if selected == "Datasets":
     st.title(f"{selected}")
     st.write("Data yang digunakan yaitu data Penyakit Hipertensi dari UPT Puskesmas Modopuro Mojokerto.")
-    data_hp = pd.read_csv("https://raw.githubusercontent.com/DiahDSyntia/Tugas-Akhir/main/DATABARU3.xlsx%20-%20DATAFIX.csv")
+    data_hp = pd.read_csv('https://raw.githubusercontent.com/DiahDSyntia/6sks/main/DATAA6SKS.csv',sep=';')
     st.write("Dataset Hipertensi : ", data_hp) 
     st.write('Jumlah baris dan kolom :', data_hp.shape)
     X=data_hp.iloc[:,0:7].values 
@@ -119,7 +155,7 @@ if selected == "Pre-Processing":
     st.markdown('<h3 style="text-align: left;"> Data Asli </h1>', unsafe_allow_html=True)
     st.write("Berikut merupakan data asli yang didapat dari UPT Puskesmas Modopuro Mojokerto.")
     
-    df = pd.read_csv("https://raw.githubusercontent.com/DiahDSyntia/Tugas-Akhir/main/DATABARU3.xlsx%20-%20DATAFIX.csv")
+    df = pd.read_csv("https://raw.githubusercontent.com/DiahDSyntia/6sks/main/DATAA6SKS.csv",sep=';')
     st.write("Dataset Hipertensi : ", df) 
     st.markdown('<h3 style="text-align: left;"> Lakukan Cleaning Data </h1>', unsafe_allow_html=True)
     if st.button("Clean Data"):
@@ -146,7 +182,7 @@ if selected == "Pre-Processing":
 
 if selected == "Modelling":
     st.write("Hasil Akurasi, Presisi, Recall, F1- Score Metode SVM")
-    data = pd.read_csv('https://raw.githubusercontent.com/DiahDSyntia/Tugas-Akhir/main/datanormalisasi.csv', sep=';')
+    data = pd.read_csv('https://raw.githubusercontent.com/DiahDSyntia/6sks/main/datahasilnormalisasi.csv', sep=';')
 
     # Memisahkan fitur dan target
     X = data[['Usia', 'IMT', 'Sistole', 'Diastole', 'Nafas','Detak Nadi','JK_L','JK_P']]
@@ -156,7 +192,7 @@ if selected == "Modelling":
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
 
     # Inisialisasi model SVM sebagai base estimator
-    model = SVC(kernel='rbf', C=1, gamma=1)
+    model = SVC(kernel='rbf', C=1, decision_function_shape='ovo')
 
     # K-Fold Cross Validation
     k_fold = KFold(n_splits=5, shuffle=True, random_state=0)
@@ -233,68 +269,26 @@ if selected == "Modelling":
             </tr>
         </table>
         """
-
-            
         st.markdown(html_code, unsafe_allow_html=True)
+    
+    # Membuat DataFrame untuk menampilkan x_test, prediksi vs aktual
+    comparison_df = X_test.copy()
+    comparison_df['Actual'] = y_test
+    comparison_df['Predicted'] = y_pred
+    st.write("<br><br>", unsafe_allow_html=True)
+    # Menampilkan DataFrame perbandingan hasil prediksi dan label aktual
+    st.write("Data Perbandingan Hasil Prediksi dan Label Aktual")
+    st.dataframe(comparison_df)
+
+    # Kelompokkan data berdasarkan confusion matrix
+    grouped_data = group_data_by_confusion_matrix(y_test, y_pred, X_test)
+
+    # Tampilkan hasil pengelompokan data
+    for group_name, group_df in grouped_data.items():
+        st.write(f"{group_name}:")
+        st.dataframe(group_df)
 
 if selected == "Implementation":
-    data = pd.read_csv('https://raw.githubusercontent.com/DiahDSyntia/Tugas-Akhir/main/datanormalisasi2.csv', sep=';')
-        
-    #st.write("Dataset Hipertensi : ", data)
-    
-    # Memisahkan fitur dan target
-    X = data[['Usia', 'IMT', 'Sistole', 'Diastole', 'Nafas','Detak Nadi','Jenis Kelamin']]
-    y = data['Diagnosa']
-
-    # Bagi dataset menjadi data latih dan data uji
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
-
-    # Inisialisasi model SVM sebagai base estimator
-    model = SVC(kernel='rbf', C=1)
-
-    # K-Fold Cross Validation
-    k_fold = KFold(n_splits=5, shuffle=True, random_state=0)
-    cv_scores = cross_val_score(model, X_train, y_train, cv=k_fold)
-    
-    # Menampilkan akurasi K-Fold Cross Validation
-    print(f'K-Fold Cross Validation Scores: {cv_scores}')
-    print(f'Mean Accuracy: {cv_scores.mean() * 100:.2f}%')
-    
-    # Menyimpan nilai akurasi dari setiap lipatan
-    accuracies = []
-    
-    # Melakukan validasi silang dan menyimpan akurasi dari setiap iterasi
-    for i, (train_index, test_index) in enumerate(k_fold.split(X_train)):
-        X_train_fold, X_val_fold = X_train.iloc[train_index], X_train.iloc[test_index]
-        y_train_fold, y_val_fold = y_train.iloc[train_index], y_train.iloc[test_index]
-    
-        # Melatih model
-        model.fit(X_train_fold, y_train_fold)
-    
-        # Menguji model
-        y_pred_fold = model.predict(X_val_fold)
-    
-        # Mengukur akurasi
-        accuracy_fold = accuracy_score(y_val_fold, y_pred_fold)
-        accuracies.append(accuracy_fold)
-    
-        print(f'Accuracy di fold {i+1}: {accuracy_fold * 100:.2f}%')
-    
-    # Menampilkan rata-rata akurasi dari setiap lipatan
-    print(f'Mean Accuracy of K-Fold Cross Validation: {np.mean(accuracies) * 100:.2f}%')
-
-    # Melatih model pada data latih
-    model.fit(X_train, y_train)
-
-    # Menguji model pada data uji
-    y_pred = model.predict(X_test)
-    
-    # Mengukur akurasi pada data uji
-    accuracy = accuracy_score(y_test, y_pred)
-    precision = precision_score(y_test, y_pred, average='weighted')
-    recall = recall_score(y_test, y_pred, average='weighted')
-    f1 = f1_score(y_test, y_pred, average='weighted')
-
     st.write("""
     ### Penjelasan :"""
     )
@@ -316,9 +310,11 @@ if selected == "Implementation":
     Usia = st.number_input("Umur", min_value=0, max_value=150)
     IMT = st.number_input("IMT(Indeks Massa Tubuh)", min_value=0.0, max_value=100.0)
     Sistole = st.number_input("Sistole", min_value=0, max_value=300)
-    Diastole = st.number_input("Diastole", min_value=0, max_value=200)
-    Nafas = st.number_input("Nafas", min_value=0, max_value=100)
+    Diastole = st.number_input("Diastole", min_value=0, max_value=300)
+    Nafas = st.number_input("Nafas", min_value=0, max_value=300)
     Detak_nadi = st.number_input("Detak Nadi", min_value=0, max_value=300)
+    # Pilihan metode
+    metode = st.selectbox("Pilih Metode", ["SVM", "SVM + Bagging"])
     submit = st.button("Submit")
     
     if submit:
@@ -334,18 +330,26 @@ if selected == "Implementation":
             'Detak Nadi': [Detak_nadi]
         }
         new_data = pd.DataFrame(data)
-        datatest = pd.read_csv('https://raw.githubusercontent.com/DiahDSyntia/Tugas-Akhir/main/datatestingsebnormalisasi1.csv')  
+        datatest = pd.read_csv('https://raw.githubusercontent.com/DiahDSyntia/6sks/main/X_test%20(2).csv')  
         datatest = pd.concat([datatest, new_data], ignore_index=True)
         #st.write(datatest)
-        datanorm = joblib.load('scaler.pkl').fit_transform(datatest)
-        datapredict = joblib.load('modelrbf.pkl').predict(datanorm)
+        datanorm = joblib.load('scaler3.pkl').fit_transform(datatest)
+        # Prediksi dengan metode yang dipilih
+        if metode == "SVM":
+            model = joblib.load('modelRBFovo.pkl')
+            model_name = "SVM"
+        else:  # SVM + Bagging
+            model = joblib.load('baggingovo.pkl')
+            model_name = "SVM + Bagging"
+        datapredict = model.predict(datanorm)
 
         st.write('Data yang Diinput:')
         st.write(f'- Jenis Kelamin: {Jenis_Kelamin}, Usia: {Usia}, IMT: {IMT}, Sistole: {Sistole}, Diastole: {Diastole}, Nafas: {Nafas}, Detak Nadi: {Detak_nadi}')
+        st.write(f'Hasil prediksi menggunakan model: {model_name}')
         
-        if datapredict[-1] == 1 :
-            st.write("""# Hasil Prediksi : Hipertensi 1, Silahkan Ke Dokter""")
+        if datapredict[-1] == 1:
+            st.write(f"## Hasil Prediksi Menggunakan {model_name}: Hipertensi 1, Silahkan Ke Dokter")
         elif datapredict[-1] == 2:
-            st.write("# Hipertensi 2, Silahkan ke dokter")
+            st.write(f"## Hasil Prediksi Menggunakan {model_name}: Hipertensi 2, Silahkan ke dokter")
         else:
-            st.write("# Tidak Hipertensi")
+            st.write(f"## Hasil Prediksi Menggunakan {model_name}: Tidak Hipertensi, Jika kamu khawatir silahkan ke dokter yaa!")

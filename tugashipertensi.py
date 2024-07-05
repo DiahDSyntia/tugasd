@@ -330,7 +330,7 @@ if selected == "Implementation":
             'Detak Nadi': [Detak_nadi]
         }
         new_data = pd.DataFrame(data)
-        datatest = pd.read_csv('https://raw.githubusercontent.com/DiahDSyntia/6sks/main/X_test%20(2).csv')  
+        datatest = pd.read_csv('https://raw.githubusercontent.com/DiahDSyntia/tugasd/main/X_test1.csv')  
         datatest = pd.concat([datatest, new_data], ignore_index=True)
         #st.write(datatest)
         datanorm = joblib.load('scaler.pkl').fit_transform(datatest)
